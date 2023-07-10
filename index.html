@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+
+        <title>HTML5 Game</title>
+        <meta name="description" content="A basic HTML5 game">
+        <meta name="author" content="[Your name]">
+    </head>
+    <body> 
+        <canvas id="canvas" width="750" height="400" style="border:1px solid lightgrey;">
+            Your browser does not support the HTML5 canvas tag.
+        </canvas>
+        
+        <script>   
+            "use strict";
+            let canvas;
+            let context;
+            let fps;
+            let secondsPassed = 0;
+            let oldTimeStamp = 0;
+            let timePassed = 0;
+            let gameObjects;
+            let icon;
+            
+            let glad = new Image();
+            glad.src = 'https://img.icons8.com/?size=512&id=16676&format=png';
+            
+            let comm = new Image();
+            comm.src = 'https://img.icons8.com/?size=512&id=xR83A4nA9vAh&format=png';
+            
+            let jest = new Image();
+            jest.src = 'https://img.icons8.com/?size=512&id=NjydyqVp0rk1&format=png';
+            
+            let law = new Image();
+            law.src = 'https://img.icons8.com/?size=512&id=2m0W8DBVmfDm&format=png';
+            
+            // Define the edges of the canvas
+            const canvasWidth = 750;
+            const canvasHeight = 400;
+            
+            // Set a restitution, a lower value will lose more energy when colliding
+            const restitution = 1;
+            
+            const urlParams = new URLSearchParams(window.location.search);
+
+            function parseParam(str) {
+                return String(str).replace(/[\r]/g, '')
+            }
+            
+            var roles = parseParam(urlParams.get("roles") || ("Gladiator\nCommander\nCommander\nJester\nJester\nLawmaker")).split("\n");
+            var users = parseParam(urlParams.get("users") || ("1\n2\n3\n4\n5\n6")).split("\n");
+        
+            window.onload = init;
+        
+            function init(){
+                // Get a reference to the canvas
+                canvas = document.getElementById('canvas');
+                context = canvas.getContext('2d');
+                
+                createWorld();
+        
+                // Start the first frame request
+                window.requestAnimationFrame(gameLoop);
+            }
+            
+            class GameObject
+            {
+                constructor (context, role, x, y, vx, vy, mass, text){
+                    this.context = context;
+                    this.role = role;
+                    this.x = x;
+                    this.y = y;
+                    this.vx = vx;
+                    this.vy = vy;
+                    this.mass = mass;
+                    this.text = text;
+            
+                    this.isColliding = false;
+                }
+            }
+            
+            class Sprite extends GameObject
+            {
+                constructor (context, role, x, y, vx, vy, mass, text){
+                    super(context, role, x, y, vx, vy, mass, text);
+            
+                    //Set default width and height
+                    this.width = 50;
+                    this.height = 50;
+                    // this.text = 'Nametag'
+                }
+            
+                draw(){
+                    //Draw a simple square
+                    this.context.drawImage(this.role, this.x, this.y, this.width, this.height);
+                    this.context.textAlign = "center";
+                    this.context.fillText(this.text, this.x + 25, this.y)
+                    
+                }
+            
+                update(secondsPassed){
+                    //Move with set velocity
+                    this.x += this.vx * secondsPassed;
+                    this.y += this.vy * secondsPassed;
+                }
+            }
+
+            function createWorld(){
+                gameObjects = []
+                icon = glad
+                
+                for (let i = 0; i < roles.length; i++) {
+                    if (roles[i] == "Gladiator") {
+                        icon = glad
+                    } else if (roles[i] == "Jester") {
+                        icon = jest
+                    } else if (roles[i] == "Commander") {
+                        icon = comm
+                    } else if (roles[i] == "Lawmaker") {
+                        icon = law
+                    }
+                    
+                    gameObjects.push(new Sprite(context, icon, 
+                        Math.floor((Math.random() * canvasWidth) + 1), 
+                        Math.floor((Math.random() * canvasHeight) + 1), 
+                        Math.floor((Math.random() * 50) + 1), 
+                        Math.floor((Math.random() * 50) + 1), 
+                        1, 
+                        users[i]));
+                    
+                }
+            }
+            
+            function gameLoop(timeStamp){
+                // Calculate the number of seconds passed since the last frame
+                secondsPassed = (timeStamp - oldTimeStamp) / 1000;
+                oldTimeStamp = timeStamp;
+                
+                // Move forward in time with a maximum amount
+                // secondsPassed = Math.min(secondsPassed, 0.1);
+            
+                // Calculate fps
+                // fps = Math.round(1 / secondsPassed);
+            
+                // Draw number to the screen
+                // context.fillStyle = 'white';
+                // context.fillRect(0, 0, 200, 100);
+                // context.font = '25px Arial';
+                // context.fillStyle = 'black';
+                // context.fillText("FPS: " + fps, 10, 30);
+                
+                // Loop over all game objects
+                for (let i = 0; i < gameObjects.length; i++) {
+                    gameObjects[i].update(secondsPassed);
+                }
+                
+                detectCollisions();
+                
+                detectEdgeCollisions();
+                
+                clearCanvas();
+                
+                // Do the same to draw
+                for (let i = 0; i < gameObjects.length; i++) {
+                    gameObjects[i].draw();
+                }
+        
+                // Keep requesting new frames
+                window.requestAnimationFrame(gameLoop);
+            }
+            
+            function clearCanvas() {
+                // Clear the canvas
+                context.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            function detectCollisions(){
+                let obj1;
+                let obj2;
+            
+                // Reset collision state of all objects
+                for (let i = 0; i < gameObjects.length; i++) {
+                    gameObjects[i].isColliding = false;
+                }
+            
+                // Start checking for collisions
+                for (let i = 0; i < gameObjects.length; i++)
+                {
+                    obj1 = gameObjects[i];
+                    for (let j = i + 1; j < gameObjects.length; j++)
+                    {
+                        obj2 = gameObjects[j];
+            
+                        // Compare object1 with object2
+                        if (rectIntersect(obj1.x, obj1.y, obj1.width, obj1.height, obj2.x, obj2.y, obj2.width, obj2.height)){
+                            obj1.isColliding = true;
+                            obj2.isColliding = true;
+                            
+                            let vCollision = {x: obj2.x - obj1.x, y: obj2.y - obj1.y};
+                            let distance = Math.sqrt((obj2.x-obj1.x)*(obj2.x-obj1.x) + (obj2.y-obj1.y)*(obj2.y-obj1.y));
+                            let vCollisionNorm = {x: vCollision.x / distance, y: vCollision.y / distance};
+                            let vRelativeVelocity = {x: obj1.vx - obj2.vx, y: obj1.vy - obj2.vy};
+                            let speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
+        
+                            if (speed < 0) {
+                                break;
+                            }
+        
+                            let impulse = 2 * speed / (obj1.mass + obj2.mass);
+                            obj1.vx -= (impulse * obj2.mass * vCollisionNorm.x);
+                            obj1.vy -= (impulse * obj2.mass * vCollisionNorm.y);
+                            obj2.vx += (impulse * obj1.mass * vCollisionNorm.x);
+                            obj2.vy += (impulse * obj1.mass * vCollisionNorm.y);
+                        }
+                    }
+                }
+            }
+            
+            function detectEdgeCollisions(){
+                 let obj;
+                 for (let i = 0; i < gameObjects.length; i++)
+                 {
+                     obj = gameObjects[i];
+            
+                     // Check for left and right
+                     if (obj.x < 0){
+                         obj.vx = Math.abs(obj.vx) * restitution;
+                         obj.x = 0;
+                     } else if (obj.x + obj.width > canvasWidth){
+                         obj.vx = -Math.abs(obj.vx) * restitution;
+                         obj.x = canvasWidth - obj.width;
+                     }
+            
+                     // Check for bottom and top
+                     if (obj.y < 0){
+                         obj.vy = Math.abs(obj.vy) * restitution;
+                         obj.y = 0;
+                     } else if (obj.y + obj.height > canvasHeight){
+                         obj.vy = -Math.abs(obj.vy) * restitution;
+                         obj.y = canvasHeight - obj.height;
+                     }
+                 }
+            }
+            function rectIntersect(x1, y1, w1, h1, x2, y2, w2, h2) {
+                // Check x and y for overlap
+                if (x2 > w1 + x1 || x1 > w2 + x2 || y2 > h1 + y1 || y1 > h2 + y2){
+                    return false;
+                }
+                return true;
+            }
+            
+            function circleIntersect(x1, y1, r1, x2, y2, r2) {
+                // Calculate the distance between the two circles
+                let squareDistance = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+            
+                // When the distance is smaller or equal to the sum
+                // of the two radius, the circles touch or overlap
+                return squareDistance <= ((r1 + r2) * (r1 + r2))
+            }
+                        
+        </script>
+    </body>
+</html>
