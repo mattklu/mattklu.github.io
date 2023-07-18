@@ -22,7 +22,16 @@
             let timePassed = 0;
             let gameObjects;
             let icon;
+            let movement;
+            let width;
+            let height;
+            let speedx;
+            let speedy;
+            let posx;
+            let posy;
+            let fontformat;
             
+            // Sprites
             let glad = new Image();
             glad.src = 'https://img.icons8.com/?size=512&id=16676&format=png';
             
@@ -34,6 +43,54 @@
             
             let law = new Image();
             law.src = 'https://img.icons8.com/?size=512&id=2m0W8DBVmfDm&format=png';
+            
+            
+            // Map Icons
+            let house = new Image();
+            house.src = 'https://img.icons8.com/?size=512&id=12125&format=png';
+            
+            let mansion = new Image();
+            mansion.src = 'https://img.icons8.com/?size=512&id=FP98HhFhGLsf&format=png';
+            
+            let tavern = new Image();
+            tavern.src = 'https://img.icons8.com/?size=512&id=YoHY1WiJFrHe&format=png';
+            
+            let library = new Image();
+            library.src = 'https://img.icons8.com/?size=512&id=5hSWsBHzAf5I&format=png';
+            
+            let colosseum = new Image();
+            colosseum.src = 'https://img.icons8.com/?size=512&id=tDK7IStZjjD1&format=png';
+            
+            let farm = new Image();
+            farm.src = 'https://img.icons8.com/?size=512&id=exErmfGnQMI9&format=png';
+            
+            let town = new Image();
+            town.src = 'https://img.icons8.com/?size=512&id=dkklajcs3HId&format=png';
+            
+            let castle = new Image();
+            castle.src = 'https://img.icons8.com/?size=512&id=tvWu31iIQDtD&format=png';
+            
+            let mountain = new Image();
+            mountain.src = 'https://img.icons8.com/?size=512&id=UwKKI6b0R1bk&format=png';
+            
+            let forest = new Image();
+            forest.src = 'https://img.icons8.com/?size=512&id=iJv37SgS5WQS&format=png';
+            
+            let dragon = new Image();
+            dragon.src = 'https://img.icons8.com/?size=512&id=rmer2541rptU&format=png';
+            
+            let battle = new Image();
+            battle.src = 'https://img.icons8.com/?size=512&id=RqzOGTw3qm9M&format=png';
+            
+            let horse = new Image();
+            horse.src = 'https://img.icons8.com/?size=512&id=0YPxCqgQKTtL&format=png';
+            
+            let cityhall = new Image();
+            cityhall.src = 'https://img.icons8.com/?size=512&id=11857&format=png';
+            
+            let fire = new Image();
+            fire.src = 'https://img.icons8.com/?size=512&id=rtWCj9hO1w1u&format=png';
+            
             
             // Define the edges of the canvas
             const canvasWidth = 1000;
@@ -48,8 +105,10 @@
                 return String(str).replace(/[\r]/g, '')
             }
             
-            var roles = parseParam(urlParams.get("roles") || ("Gladiator\nCommander\nCommander\nJester\nJester\nLawmaker")).split("\n");
-            var users = parseParam(urlParams.get("users") || ("1\n2\n3\n4\n5\n6")).split("\n");
+            var sprites = parseParam(urlParams.get("sprites") || ("Battle\nHorse\nFarm\nFire\nTown\nMountain\nForest")).split("\n");
+            var titles = parseParam(urlParams.get("titles") || ("1\n2\n3\n4\n5\n6\n7")).split("\n");
+            var xcoords = parseParam(urlParams.get("xcoords") || ("random\nrandom\n100\n200\nrandom\n300\nrandom")).split("\n");
+            var ycoords = parseParam(urlParams.get("ycoords") || ("random\nrandom\n100\n200\nrandom\n200\n350")).split("\n");
         
             window.onload = init;
         
@@ -66,15 +125,19 @@
             
             class GameObject
             {
-                constructor (context, role, x, y, vx, vy, mass, text){
+                constructor (context, sprite, x, y, vx, vy, w, h, mass, text, font, moving){
                     this.context = context;
-                    this.role = role;
+                    this.sprite = sprite;
                     this.x = x;
                     this.y = y;
                     this.vx = vx;
                     this.vy = vy;
                     this.mass = mass;
                     this.text = text;
+                    this.moving = moving;
+                    this.w = w;
+                    this.h = h;
+                    this.font = font;
             
                     this.isColliding = false;
                 }
@@ -82,21 +145,21 @@
             
             class Sprite extends GameObject
             {
-                constructor (context, role, x, y, vx, vy, mass, text){
-                    super(context, role, x, y, vx, vy, mass, text);
+                constructor (context, sprite, x, y, vx, vy, w, h, mass, text, font, moving){
+                    super(context, sprite, x, y, vx, vy, w, h, mass, text, font, moving);
             
                     //Set default width and height
-                    this.width = 50;
-                    this.height = 50;
+                    this.width = w;
+                    this.height = h;
                     // this.text = 'Nametag'
                 }
             
                 draw(){
                     //Draw a simple square
-                    this.context.drawImage(this.role, this.x, this.y, this.width, this.height);
+                    this.context.drawImage(this.sprite, this.x, this.y, this.width, this.height);
                     this.context.textAlign = "center";
-                    this.context.font = "24px Arial";
-                    this.context.fillText(this.text, this.x + 25, this.y)
+                    this.context.font = this.font;
+                    this.context.fillText(this.text, this.x + this.width / 2, this.y + this.height + 18)
                     
                 }
             
@@ -111,24 +174,119 @@
                 gameObjects = []
                 icon = glad
                 
-                for (let i = 0; i < roles.length; i++) {
-                    if (roles[i] == "Gladiator") {
+                for (let i = 0; i < sprites.length; i++) {
+                    movement = false
+                    speedx = 0
+                    speedy = 0
+                    width = 50
+                    height = 50
+                    fontformat = "20px Brush Script MT"
+                    
+                    // Coordinates for the objects
+                    if (xcoords[i].toLowerCase() == "random") {
+                        posx = Math.floor((Math.random() * canvasWidth) + 1)
+                    } else {
+                        posx = parseInt(xcoords[i])
+                    }
+                    
+                    if (ycoords[i].toLowerCase() == "random") {
+                        posy = Math.floor((Math.random() * canvasHeight) + 1)
+                    } else {
+                        posy = parseInt(ycoords[i])
+                    }
+                    
+                    // Other object attributes
+                    if (sprites[i] == "Gladiator") {
                         icon = glad
-                    } else if (roles[i] == "Jester") {
+                        movement = true
+                        speedx = Math.floor((Math.random() * 50) + 1)
+                        speedy = Math.floor((Math.random() * 50) + 1)
+                        fontformat = "24px Georgia"
+                    } else if (sprites[i] == "Jester") {
                         icon = jest
-                    } else if (roles[i] == "Commander") {
+                        movement = true
+                        speedx = Math.floor((Math.random() * 50) + 1)
+                        speedy = Math.floor((Math.random() * 50) + 1)
+                        fontformat = "24px Georgia"
+                    } else if (sprites[i] == "Commander") {
                         icon = comm
-                    } else if (roles[i] == "Lawmaker") {
+                        movement = true
+                        speedx = Math.floor((Math.random() * 50) + 1)
+                        speedy = Math.floor((Math.random() * 50) + 1)
+                        fontformat = "24px Georgia"
+                    } else if (sprites[i] == "Lawmaker") {
                         icon = law
+                        movement = true
+                        speedx = Math.floor((Math.random() * 50) + 1)
+                        speedy = Math.floor((Math.random() * 50) + 1)
+                        fontformat = "24px Georgia"
+                    } else if (sprites[i].toLowerCase() == "house") {
+                        icon = house
+                        width = 40
+                        height = 40
+                    } else if (sprites[i].toLowerCase() == "mansion") {
+                        icon = mansion
+                    } else if (sprites[i].toLowerCase() == "tavern") {
+                        icon = tavern
+                    } else if (sprites[i].toLowerCase() == "library") {
+                        icon = library
+                        width = 40
+                        height = 40
+                    } else if (sprites[i].toLowerCase() == "colosseum") {
+                        icon = colosseum
+                        width = 60
+                        height = 60
+                    } else if (sprites[i].toLowerCase() == "farm") {
+                        icon = farm
+                    } else if (sprites[i].toLowerCase() == "town") {
+                        icon = town
+                    } else if (sprites[i].toLowerCase() == "castle") {
+                        icon = castle
+                    } else if (sprites[i].toLowerCase() == "mountain") {
+                        icon = mountain
+                        width = 70
+                        height = 70
+                    } else if (sprites[i].toLowerCase() == "forest") {
+                        icon = forest
+                        width = 60
+                        height = 60
+                    } else if (sprites[i].toLowerCase() == "dragon") {
+                        icon = dragon
+                        width = 40
+                        height = 40
+                        movement = true
+                        speedx = Math.floor((Math.random() * 50) + 1)
+                        speedy = Math.floor((Math.random() * 50) + 1)
+                    } else if (sprites[i].toLowerCase() == "battle") {
+                        icon = battle
+                        width = 40
+                        height = 40
+                    } else if (sprites[i].toLowerCase() == "horse") {
+                        icon = horse
+                        width = 40
+                        height = 40
+                        movement = true
+                        speedx = Math.floor((Math.random() * 50) + 1)
+                        speedy = Math.floor((Math.random() * 50) + 1)
+                    } else if (sprites[i].toLowerCase() == "cityhall") {
+                        icon = cityhall
+                    } else if (sprites[i].toLowerCase() == "fire") {
+                        icon = fire
+                        width = 40
+                        height = 40
                     }
                     
                     gameObjects.push(new Sprite(context, icon, 
-                        Math.floor((Math.random() * canvasWidth) + 1), 
-                        Math.floor((Math.random() * canvasHeight) + 1), 
-                        Math.floor((Math.random() * 50) + 1), 
-                        Math.floor((Math.random() * 50) + 1), 
+                        posx, 
+                        posy, 
+                        speedx, 
+                        speedy, 
+                        width,
+                        height,
                         1, 
-                        users[i]));
+                        titles[i],
+                        fontformat,
+                        movement));
                     
                 }
             }
@@ -188,31 +346,34 @@
                 // Start checking for collisions
                 for (let i = 0; i < gameObjects.length; i++)
                 {
+                    
                     obj1 = gameObjects[i];
                     for (let j = i + 1; j < gameObjects.length; j++)
                     {
                         obj2 = gameObjects[j];
             
                         // Compare object1 with object2
-                        if (rectIntersect(obj1.x, obj1.y, obj1.width, obj1.height, obj2.x, obj2.y, obj2.width, obj2.height)){
-                            obj1.isColliding = true;
-                            obj2.isColliding = true;
-                            
-                            let vCollision = {x: obj2.x - obj1.x, y: obj2.y - obj1.y};
-                            let distance = Math.sqrt((obj2.x-obj1.x)*(obj2.x-obj1.x) + (obj2.y-obj1.y)*(obj2.y-obj1.y));
-                            let vCollisionNorm = {x: vCollision.x / distance, y: vCollision.y / distance};
-                            let vRelativeVelocity = {x: obj1.vx - obj2.vx, y: obj1.vy - obj2.vy};
-                            let speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
-        
-                            if (speed < 0) {
-                                break;
+                        if (obj1.moving && obj2.moving) {
+                            if (rectIntersect(obj1.x, obj1.y, obj1.width, obj1.height, obj2.x, obj2.y, obj2.width, obj2.height)){
+                                obj1.isColliding = true;
+                                obj2.isColliding = true;
+                                
+                                let vCollision = {x: obj2.x - obj1.x, y: obj2.y - obj1.y};
+                                let distance = Math.sqrt((obj2.x-obj1.x)*(obj2.x-obj1.x) + (obj2.y-obj1.y)*(obj2.y-obj1.y));
+                                let vCollisionNorm = {x: vCollision.x / distance, y: vCollision.y / distance};
+                                let vRelativeVelocity = {x: obj1.vx - obj2.vx, y: obj1.vy - obj2.vy};
+                                let speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
+            
+                                if (speed < 0) {
+                                    break;
+                                }
+            
+                                let impulse = 2 * speed / (obj1.mass + obj2.mass);
+                                obj1.vx -= (impulse * obj2.mass * vCollisionNorm.x);
+                                obj1.vy -= (impulse * obj2.mass * vCollisionNorm.y);
+                                obj2.vx += (impulse * obj1.mass * vCollisionNorm.x);
+                                obj2.vy += (impulse * obj1.mass * vCollisionNorm.y);
                             }
-        
-                            let impulse = 2 * speed / (obj1.mass + obj2.mass);
-                            obj1.vx -= (impulse * obj2.mass * vCollisionNorm.x);
-                            obj1.vy -= (impulse * obj2.mass * vCollisionNorm.y);
-                            obj2.vx += (impulse * obj1.mass * vCollisionNorm.x);
-                            obj2.vy += (impulse * obj1.mass * vCollisionNorm.y);
                         }
                     }
                 }
