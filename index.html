@@ -105,8 +105,8 @@
                 return String(str).replace(/[\r]/g, '')
             }
             
-            var sprites = parseParam(urlParams.get("sprites") || ("Battle\nHorse\nFarm\nFire\nTown\nMountain\nForest")).split("\n");
-            var titles = parseParam(urlParams.get("titles") || ("1\n2\n3\n4\n5\n6\n7")).split("\n");
+            var sprites = parseParam(urlParams.get("sprites") || ("Jester\nHorse\nFarm\nFire\nTown\nMountain\nForest")).split("\n");
+            var titles = parseParam(urlParams.get("titles") || ("PridEmpire\nHorsey\n3\n4\n5\n6\n7")).split("\n");
             var xcoords = parseParam(urlParams.get("xcoords") || ("random\nrandom\n100\n200\nrandom\n300\nrandom")).split("\n");
             var ycoords = parseParam(urlParams.get("ycoords") || ("random\nrandom\n100\n200\nrandom\n200\n350")).split("\n");
         
@@ -198,28 +198,36 @@
                     // Other object attributes
                     if (sprites[i] == "Gladiator") {
                         icon = glad
+                        width = 40
+                        height = 40
                         movement = true
                         speedx = Math.floor((Math.random() * 50) + 1)
                         speedy = Math.floor((Math.random() * 50) + 1)
-                        fontformat = "24px Georgia"
+                        fontformat = "18px Georgia"
                     } else if (sprites[i] == "Jester") {
                         icon = jest
+                        width = 40
+                        height = 40
                         movement = true
                         speedx = Math.floor((Math.random() * 50) + 1)
                         speedy = Math.floor((Math.random() * 50) + 1)
-                        fontformat = "24px Georgia"
+                        fontformat = "18px Georgia"
                     } else if (sprites[i] == "Commander") {
                         icon = comm
+                        width = 40
+                        height = 40
                         movement = true
                         speedx = Math.floor((Math.random() * 50) + 1)
                         speedy = Math.floor((Math.random() * 50) + 1)
-                        fontformat = "24px Georgia"
+                        fontformat = "18px Georgia"
                     } else if (sprites[i] == "Lawmaker") {
                         icon = law
+                        width = 40
+                        height = 40
                         movement = true
                         speedx = Math.floor((Math.random() * 50) + 1)
                         speedy = Math.floor((Math.random() * 50) + 1)
-                        fontformat = "24px Georgia"
+                        fontformat = "18px Georgia"
                     } else if (sprites[i].toLowerCase() == "house") {
                         icon = house
                         width = 40
